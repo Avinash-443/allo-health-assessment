@@ -32,8 +32,7 @@ export async function POST() {
                     },
                     data: {
                         reservedUnits: {
-                            decrement:
-                                reservation.quantity
+                            decrement: reservation.quantity
                         }
                     }
                 });
@@ -51,8 +50,7 @@ export async function POST() {
 
         return NextResponse.json({
             message: "Cleanup completed",
-            expiredCount:
-                expiredReservations.length
+            expiredCount: expiredReservations.length
         });
 
     } catch (error) {
