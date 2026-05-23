@@ -1,6 +1,26 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
+
+export async function GET() {
+
+    const reservations =
+        await prisma.reservation.findMany({
+            include: {
+                product: true,
+                warehouse: true
+            },
+            orderBy: {
+                createdAt: "desc"
+            }
+        });
+
+    return NextResponse.json(
+        reservations
+    );
+}
+
+
 export async function POST(request: NextRequest) {
     try {
 
