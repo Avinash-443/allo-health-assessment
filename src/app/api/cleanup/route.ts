@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { redis } from "@/lib/redis";
 import { NextResponse } from "next/server";
 import { ReservationStatus } from "@prisma/client";
 
@@ -26,6 +27,7 @@ export async function POST() {
                 });
 
             if (inventory) {
+
                 await prisma.inventory.update({
                     where: {
                         id: inventory.id
@@ -36,6 +38,9 @@ export async function POST() {
                         }
                     }
                 });
+
+                // Clear old product cache
+                await redis.del("products");
             }
 
             await prisma.reservation.update({

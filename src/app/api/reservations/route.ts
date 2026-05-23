@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { redis } from "@/lib/redis";
 import { NextRequest, NextResponse } from "next/server";
 
 
@@ -32,7 +33,8 @@ export async function POST(request: NextRequest) {
             quantity
         } = body;
 
-        const inventory = await prisma.inventory.findMany();
+        const inventory =
+            await prisma.inventory.findMany();
 
         console.log("Received:");
         console.log({
@@ -43,13 +45,15 @@ export async function POST(request: NextRequest) {
         console.log("Database:");
         console.log(inventory);
 
-        const selectedInventory = inventory.find(
-            (item) =>
-                item.productId === productId &&
-                item.warehouseId === warehouseId
-        );
+        const selectedInventory =
+            inventory.find(
+                (item) =>
+                    item.productId === productId &&
+                    item.warehouseId === warehouseId
+            );
 
         if (!selectedInventory) {
+
             return NextResponse.json(
                 {
                     error: "Inventory not found"
@@ -65,9 +69,14 @@ export async function POST(request: NextRequest) {
             selectedInventory.reservedUnits;
 
         if (availableUnits < quantity) {
+
             return NextResponse.json(
-                { error: "Not enough stock" },
-                { status: 409 }
+                {
+                    error: "Not enough stock"
+                },
+                {
+                    status: 409
+                }
             );
         }
 
@@ -82,9 +91,13 @@ export async function POST(request: NextRequest) {
             }
         });
 
-        const expiresAt = new Date(
-            Date.now() + 10 * 60 * 1000
-        );
+        // Clear old cached products
+        await redis.del("products");
+
+        const expiresAt =
+            new Date(
+                Date.now() + 10 * 60 * 1000
+            );
 
         const reservation =
             await prisma.reservation.create({
