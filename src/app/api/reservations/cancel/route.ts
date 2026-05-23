@@ -5,13 +5,15 @@ import { ReservationStatus } from "@prisma/client";
 export async function POST(
     request: NextRequest
 ) {
+
     try {
 
         const body =
             await request.json();
 
-        const { reservationId } =
-            body;
+        const {
+            reservationId
+        } = body;
 
         const reservation =
             await prisma.reservation.findUnique({
@@ -21,9 +23,11 @@ export async function POST(
             });
 
         if (!reservation) {
+
             return NextResponse.json(
                 {
-                    error: "Reservation not found"
+                    error:
+                    "Reservation not found"
                 },
                 {
                     status: 404
@@ -35,10 +39,11 @@ export async function POST(
             reservation.status !==
             ReservationStatus.PENDING
         ) {
+
             return NextResponse.json(
                 {
                     error:
-                    "Only pending reservations can be cancelled"
+                    "Reservation already processed"
                 },
                 {
                     status: 400
@@ -50,13 +55,15 @@ export async function POST(
             await prisma.inventory.findFirst({
                 where: {
                     productId:
-                        reservation.productId,
+                    reservation.productId,
+
                     warehouseId:
-                        reservation.warehouseId
+                    reservation.warehouseId
                 }
             });
 
         if (!inventory) {
+
             return NextResponse.json(
                 {
                     error:
@@ -72,10 +79,11 @@ export async function POST(
             where: {
                 id: inventory.id
             },
+
             data: {
                 reservedUnits: {
                     decrement:
-                        reservation.quantity
+                    reservation.quantity
                 }
             }
         });
@@ -85,9 +93,10 @@ export async function POST(
                 where: {
                     id: reservation.id
                 },
+
                 data: {
                     status:
-                        ReservationStatus.RELEASED
+                    ReservationStatus.RELEASED
                 }
             });
 
@@ -102,7 +111,7 @@ export async function POST(
         return NextResponse.json(
             {
                 error:
-                    "Cancellation failed"
+                "Cancellation failed"
             },
             {
                 status: 500

@@ -24,6 +24,9 @@ export default function ReservationsPage() {
   const [loading, setLoading] =
     useState(true);
 
+  const [processingId, setProcessingId] =
+    useState<string | null>(null);
+
   useEffect(() => {
     loadReservations();
   }, []);
@@ -49,11 +52,86 @@ export default function ReservationsPage() {
     setLoading(false);
   }
 
+  async function confirmReservation(
+    reservationId: string
+  ) {
+
+    setProcessingId(reservationId);
+
+    try {
+
+      await fetch(
+        "/api/reservations/confirm",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body: JSON.stringify({
+            reservationId
+          })
+        }
+      );
+
+      loadReservations();
+
+    } catch(error) {
+
+      console.log(error);
+
+    }
+
+    setProcessingId(null);
+  }
+
+  async function cancelReservation(
+    reservationId: string
+  ) {
+
+    setProcessingId(reservationId);
+
+    try {
+
+      await fetch(
+        "/api/reservations/cancel",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body: JSON.stringify({
+            reservationId
+          })
+        }
+      );
+
+      loadReservations();
+
+    } catch(error) {
+
+      console.log(error);
+
+    }
+
+    setProcessingId(null);
+  }
+
   if (loading) {
+
     return (
+
       <div className="p-10 text-white">
+
         Loading reservations...
+
       </div>
+
     );
   }
 
@@ -89,6 +167,10 @@ export default function ReservationsPage() {
                 Status
               </th>
 
+              <th className="p-4 text-left">
+                Actions
+              </th>
+
             </tr>
 
           </thead>
@@ -106,11 +188,11 @@ export default function ReservationsPage() {
                   {reservation.product.name}
                 </td>
 
-                <td className="p-4 text-gray-700">
+                <td className="p-4">
                   {reservation.warehouse.name}
                 </td>
 
-                <td className="p-4 text-gray-700">
+                <td className="p-4">
                   {reservation.quantity}
                 </td>
 
@@ -130,6 +212,71 @@ export default function ReservationsPage() {
                     {reservation.status}
 
                   </span>
+
+                </td>
+
+                <td className="p-4">
+
+                  {reservation.status ===
+                    "PENDING" && (
+
+                    <div className="flex gap-2">
+
+                      <button
+                        disabled={
+                          processingId ===
+                          reservation.id
+                        }
+
+                        onClick={() =>
+                          confirmReservation(
+                            reservation.id
+                          )
+                        }
+
+                        className="
+                        bg-green-600
+                        text-white
+                        px-4
+                        py-2
+                        rounded
+                        hover:bg-green-700
+                        disabled:bg-gray-400"
+                      >
+
+                        Confirm
+
+                      </button>
+
+                      <button
+                        disabled={
+                          processingId ===
+                          reservation.id
+                        }
+
+                        onClick={() =>
+                          cancelReservation(
+                            reservation.id
+                          )
+                        }
+
+                        className="
+                        bg-red-600
+                        text-white
+                        px-4
+                        py-2
+                        rounded
+                        hover:bg-red-700
+                        disabled:bg-gray-400"
+                      >
+
+                        Cancel
+
+                      </button>
+
+                    </div>
+
+                  )}
 
                 </td>
 
