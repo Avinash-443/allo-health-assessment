@@ -5,60 +5,76 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET() {
 
     const reservations =
-        await prisma.reservation.findMany({
-            include: {
-                product: true,
-                warehouse: true
-            },
-            orderBy: {
-                createdAt: "desc"
-            }
-        });
+    await prisma.reservation.findMany({
+
+        include:{
+
+            product:true,
+            warehouse:true
+
+        },
+
+        orderBy:{
+            createdAt:"desc"
+        }
+
+    });
 
     return NextResponse.json(
         reservations
     );
+
 }
 
-export async function POST(
-    request: NextRequest
-) {
 
-    try {
+export async function POST(
+    request:NextRequest
+){
+
+    try{
 
         const body =
-            await request.json();
+        await request.json();
 
-        const {
+        const{
+
             productId,
             warehouseId,
             quantity
+
         } = body;
 
+
         const expiresAt =
-            new Date(
-                Date.now()
-                +
-                10 * 60 * 1000
-            );
+        new Date(
+
+            Date.now()
+            +
+            10*60*1000
+
+        );
+
 
         const reservation =
+
         await prisma.$transaction(
+
         async(tx)=>{
 
             const inventory =
             await tx.inventory.findFirst({
 
                 where:{
+
                     productId,
                     warehouseId
+
                 }
 
             });
 
-            if(
-                !inventory
-            ){
+
+            if(!inventory){
 
                 throw new Error(
                     "Inventory not found"
@@ -66,49 +82,18 @@ export async function POST(
 
             }
 
-            /*
-             Strong concurrency-safe update:
 
-             Update inventory ONLY IF enough stock
-             still exists at the exact moment of update
-            */
+            const availableUnits =
 
-            const result =
-            await tx.inventory.updateMany({
+            inventory.totalUnits
+            -
+            inventory.reservedUnits;
 
-                where:{
-
-                    id: inventory.id,
-
-                    reservedUnits:{
-
-                        lte:
-                        inventory.totalUnits
-                        -
-                        quantity
-
-                    }
-
-                },
-
-                data:{
-
-                    reservedUnits:{
-                        increment:
-                        quantity
-                    }
-
-                }
-
-            });
-
-            /*
-             If another request already reserved stock,
-             updateMany affects 0 rows
-            */
 
             if(
-                result.count===0
+                availableUnits
+                <
+                quantity
             ){
 
                 throw new Error(
@@ -116,6 +101,49 @@ export async function POST(
                 );
 
             }
+
+
+            /*
+            Strong optimistic locking
+            */
+
+            const result =
+
+            await tx.inventory.updateMany({
+
+                where:{
+
+                    id:inventory.id,
+
+                    reservedUnits:
+                    inventory.reservedUnits
+
+                },
+
+                data:{
+
+                    reservedUnits:{
+
+                        increment:
+                        quantity
+
+                    }
+
+                }
+
+            });
+
+
+            if(
+                result.count===0
+            ){
+
+                throw new Error(
+                    "Inventory changed. Please try again."
+                );
+
+            }
+
 
             return await tx.reservation.create({
 
@@ -133,11 +161,11 @@ export async function POST(
 
         });
 
-        // Clear stale Redis cache
 
         await redis.del(
             "products"
         );
+
 
         return NextResponse.json(
             reservation
@@ -151,16 +179,20 @@ export async function POST(
         return NextResponse.json(
 
             {
+
                 error:
                 error instanceof Error
                 ?
                 error.message
                 :
                 "Reservation failed"
+
             },
 
             {
+
                 status:409
+
             }
 
         );

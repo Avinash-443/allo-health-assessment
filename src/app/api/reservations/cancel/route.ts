@@ -9,113 +9,166 @@ export async function POST(
     try {
 
         const body =
-            await request.json();
+        await request.json();
 
         const {
             reservationId
         } = body;
 
-        const reservation =
-            await prisma.reservation.findUnique({
-                where: {
-                    id: reservationId
-                }
-            });
 
-        if (!reservation) {
+        const reservation =
+        await prisma.reservation.findUnique({
+
+            where:{
+                id:reservationId
+            }
+
+        });
+
+
+        if(!reservation){
 
             return NextResponse.json(
+
                 {
                     error:
                     "Reservation not found"
                 },
+
                 {
-                    status: 404
+                    status:404
                 }
+
             );
+
         }
 
-        if (
+
+        if(
+
             reservation.status !==
             ReservationStatus.PENDING
-        ) {
+
+        ){
 
             return NextResponse.json(
+
                 {
                     error:
                     "Reservation already processed"
                 },
+
                 {
-                    status: 400
+                    status:400
                 }
+
             );
+
         }
 
+
         const inventory =
-            await prisma.inventory.findFirst({
-                where: {
-                    productId:
-                    reservation.productId,
+        await prisma.inventory.findFirst({
 
-                    warehouseId:
-                    reservation.warehouseId
-                }
-            });
+            where:{
 
-        if (!inventory) {
+                productId:
+                reservation.productId,
+
+                warehouseId:
+                reservation.warehouseId
+
+            }
+
+        });
+
+
+        if(!inventory){
 
             return NextResponse.json(
+
                 {
                     error:
                     "Inventory not found"
                 },
+
                 {
-                    status: 404
+                    status:404
                 }
+
             );
+
         }
 
+
+        const newReserved =
+
+        Math.max(
+
+            0,
+
+            inventory.reservedUnits
+            -
+            reservation.quantity
+
+        );
+
+
         await prisma.inventory.update({
-            where: {
-                id: inventory.id
+
+            where:{
+                id:inventory.id
             },
 
-            data: {
-                reservedUnits: {
-                    decrement:
-                    reservation.quantity
-                }
+            data:{
+
+                reservedUnits:
+                newReserved
+
             }
+
         });
 
-        const updatedReservation =
-            await prisma.reservation.update({
-                where: {
-                    id: reservation.id
-                },
 
-                data: {
-                    status:
-                    ReservationStatus.RELEASED
-                }
-            });
+        const updatedReservation =
+        await prisma.reservation.update({
+
+            where:{
+                id:reservation.id
+            },
+
+            data:{
+
+                status:
+                ReservationStatus.RELEASED
+
+            }
+
+        });
+
 
         return NextResponse.json(
             updatedReservation
         );
 
-    } catch(error) {
+    }
+    catch(error){
 
         console.log(error);
 
         return NextResponse.json(
+
             {
                 error:
                 "Cancellation failed"
             },
+
             {
-                status: 500
+                status:500
             }
+
         );
+
     }
+
 }

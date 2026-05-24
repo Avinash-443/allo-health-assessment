@@ -35,7 +35,6 @@ export default function ReservationsPage() {
 
     loadReservations();
 
-    // Auto cleanup + refresh
     const refreshInterval =
       setInterval(async () => {
 
@@ -50,7 +49,8 @@ export default function ReservationsPage() {
 
           await loadReservations();
 
-        } catch(error){
+        }
+        catch(error){
 
           console.log(error);
 
@@ -58,9 +58,9 @@ export default function ReservationsPage() {
 
       },5000);
 
-    // Timer update every second
+
     const timerInterval =
-      setInterval(() => {
+      setInterval(()=>{
 
         setCurrentTime(
           Date.now()
@@ -68,7 +68,7 @@ export default function ReservationsPage() {
 
       },1000);
 
-    return () => {
+    return ()=>{
 
       clearInterval(
         refreshInterval
@@ -82,19 +82,22 @@ export default function ReservationsPage() {
 
   },[]);
 
+
   async function loadReservations(){
 
     try{
 
       const response =
-        await fetch(
-          "/api/reservations"
-        );
+      await fetch(
+        "/api/reservations"
+      );
 
       const data =
-        await response.json();
+      await response.json();
 
-      setReservations(data);
+      setReservations(
+        data
+      );
 
     }
     catch(error){
@@ -106,6 +109,7 @@ export default function ReservationsPage() {
     setLoading(false);
 
   }
+
 
   async function confirmReservation(
     reservationId:string
@@ -148,6 +152,7 @@ export default function ReservationsPage() {
 
   }
 
+
   async function cancelReservation(
     reservationId:string
   ){
@@ -189,50 +194,50 @@ export default function ReservationsPage() {
 
   }
 
+
   function getRemainingTime(
     expiresAt:string
   ){
 
     const remaining =
-      new Date(
-        expiresAt
-      ).getTime()
-      -
-      currentTime;
+
+    new Date(
+      expiresAt
+    ).getTime()
+
+    -
+
+    currentTime;
 
     if(
-      remaining <=0
+      remaining<=0
     ){
-
       return "Expired";
-
     }
 
     const minutes =
-      Math.floor(
-        remaining/60000
-      );
+    Math.floor(
+      remaining/60000
+    );
 
     const seconds =
-      Math.floor(
-        (
-          remaining%
-          60000
-        )/1000
-      );
+    Math.floor(
+      (
+        remaining%60000
+      )/1000
+    );
 
     return `${minutes}m ${seconds}s`;
 
   }
 
-  if(
-    loading
-  ){
+
+  if(loading){
 
     return(
 
       <div className=
-      "p-10 text-white">
+      "p-10 text-white text-xl">
 
         Loading...
 
@@ -242,20 +247,21 @@ export default function ReservationsPage() {
 
   }
 
+
   return(
 
     <main className=
     "min-h-screen bg-gray-950 p-10">
 
       <h1 className=
-      "text-5xl text-white font-bold mb-8">
+      "text-5xl font-bold text-white mb-10">
 
         Reservations
 
       </h1>
 
       <div className=
-      "bg-white rounded-xl overflow-hidden">
+      "bg-white rounded-2xl shadow-xl overflow-hidden">
 
         <table className=
         "w-full">
@@ -263,29 +269,29 @@ export default function ReservationsPage() {
           <thead className=
           "bg-blue-600 text-white">
 
-            <tr>
+            <tr className="text-center">
 
-              <th className="p-4">
+              <th className="p-5">
                 Product
               </th>
 
-              <th className="p-4">
+              <th className="p-5">
                 Warehouse
               </th>
 
-              <th className="p-4">
+              <th className="p-5">
                 Quantity
               </th>
 
-              <th className="p-4">
+              <th className="p-5">
                 Status
               </th>
 
-              <th className="p-4">
+              <th className="p-5">
                 Expires In
               </th>
 
-              <th className="p-4">
+              <th className="p-5">
                 Actions
               </th>
 
@@ -296,42 +302,58 @@ export default function ReservationsPage() {
           <tbody className=
           "text-gray-800">
 
-            {reservations.map(
+            {
+
+            reservations.map(
             (reservation)=>(
 
             <tr
+
             key={
             reservation.id
             }
 
             className=
-            "border-b hover:bg-gray-100"
+            "border-b text-center hover:bg-gray-100 h-20 transition"
+
             >
 
-              <td className="p-4">
+              <td className=
+              "font-semibold">
+
                 {reservation.product.name}
+
               </td>
 
-              <td className="p-4">
+              <td>
+
                 {reservation.warehouse.name}
+
               </td>
 
-              <td className="p-4">
+              <td>
+
                 {reservation.quantity}
+
               </td>
 
-              <td className="p-4">
+              <td>
 
                 <span
-                className={`px-3 py-1 rounded text-white
+
+                className=
+                {`inline-block w-32 py-2 rounded-lg text-white font-semibold
 
                 ${
                   reservation.status==="PENDING"
                   ? "bg-yellow-500"
+
                   : reservation.status==="CONFIRMED"
                   ? "bg-green-600"
+
                   : "bg-red-600"
-                }`}
+                }
+                `}
                 >
 
                   {reservation.status}
@@ -340,26 +362,30 @@ export default function ReservationsPage() {
 
               </td>
 
-              <td className=
-              "p-4 font-semibold text-red-600">
+              <td
+              className=
+              "font-semibold text-red-600"
+              >
 
-              {
-              reservation.status==="PENDING"
+                {
 
-              ?
+                reservation.status==="PENDING"
 
-              getRemainingTime(
-                reservation.expiresAt
-              )
+                ?
 
-              :
+                getRemainingTime(
+                  reservation.expiresAt
+                )
 
-              "-"
-              }
+                :
+
+                "-"
+
+                }
 
               </td>
 
-              <td className="p-4">
+              <td>
 
               {
 
@@ -368,15 +394,16 @@ export default function ReservationsPage() {
               &&
 
               getRemainingTime(
-                reservation.expiresAt
+              reservation.expiresAt
               )!=="Expired"
 
-              &&
+              ?
 
               <div className=
-              "flex gap-2">
+              "flex justify-center gap-3">
 
                 <button
+
                 disabled={
                   processingId===
                   reservation.id
@@ -387,12 +414,14 @@ export default function ReservationsPage() {
                 )}
 
                 className=
-                "bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700"
+                "bg-green-600 text-white px-4 py-2 rounded-lg w-24 hover:bg-green-700"
+
                 >
 
                   Confirm
 
                 </button>
+
 
                 <button
 
@@ -406,7 +435,8 @@ export default function ReservationsPage() {
                 )}
 
                 className=
-                "bg-red-600 text-white px-3 py-2 rounded hover:bg-red-700"
+                "bg-red-600 text-white px-4 py-2 rounded-lg w-24 hover:bg-red-700"
+
                 >
 
                   Cancel
@@ -415,13 +445,19 @@ export default function ReservationsPage() {
 
               </div>
 
+              :
+
+              "-"
+
               }
 
               </td>
 
             </tr>
 
-            ))}
+            ))
+
+            }
 
           </tbody>
 

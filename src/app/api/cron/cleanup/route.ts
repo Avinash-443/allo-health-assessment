@@ -1,9 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
-import { NextResponse } from "next/server";
 import { ReservationStatus } from "@prisma/client";
+import { NextResponse } from "next/server";
 
-export async function POST() {
+export async function GET() {
 
     try {
 
@@ -26,8 +26,7 @@ export async function POST() {
 
         for(const reservation of expiredReservations){
 
-            const inventory =
-            await prisma.inventory.findFirst({
+            await prisma.inventory.updateMany({
 
                 where:{
 
@@ -37,42 +36,18 @@ export async function POST() {
                     warehouseId:
                     reservation.warehouseId
 
+                },
+
+                data:{
+
+                    reservedUnits:{
+                        decrement:
+                        reservation.quantity
+                    }
+
                 }
 
             });
-
-
-            if(inventory){
-
-                const newReserved =
-
-                Math.max(
-
-                    0,
-
-                    inventory.reservedUnits
-                    -
-                    reservation.quantity
-
-                );
-
-
-                await prisma.inventory.update({
-
-                    where:{
-                        id:inventory.id
-                    },
-
-                    data:{
-
-                        reservedUnits:
-                        newReserved
-
-                    }
-
-                });
-
-            }
 
 
             await prisma.reservation.update({
@@ -82,28 +57,22 @@ export async function POST() {
                 },
 
                 data:{
-
                     status:
                     ReservationStatus.RELEASED
-
                 }
 
             });
 
         }
 
-
         await redis.del(
             "products"
         );
 
-
         return NextResponse.json({
 
-            message:
-            "Cleanup completed",
-
-            expiredCount:
+            success:true,
+            cleaned:
             expiredReservations.length
 
         });
