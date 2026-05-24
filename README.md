@@ -481,7 +481,7 @@ Add deployed URL here
 
 GitHub Repository:
 
-Add GitHub repository URL here
+https://github.com/Avinash-443/allo-health-assessment.git
 
 ---
 
