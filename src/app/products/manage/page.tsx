@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 
-
 interface Warehouse {
     id:string;
     name:string;
@@ -10,46 +9,36 @@ interface Warehouse {
 
 export default function ManageProducts(){
 
-    const [
-        name,
-        setName
-    ] = useState("");
+    const [name,setName] =
+    useState("");
 
-    const [
-        description,
-        setDescription
-    ] = useState("");
+    const [description,setDescription] =
+    useState("");
 
-    const [
-        totalUnits,
-        setTotalUnits
-    ] = useState("");
+    const [totalUnits,setTotalUnits] =
+    useState("");
 
-    const [
-        warehouseId,
-        setWarehouseId
-    ] = useState("");
+    const [warehouseId,setWarehouseId] =
+    useState("");
 
-    const [
-        warehouses,
-        setWarehouses
-    ] = useState<Warehouse[]>([]);
+    const [warehouses,setWarehouses] =
+    useState<Warehouse[]>([]);
 
-    const [
-        loading,
-        setLoading
-    ] = useState(false);
+    const [loading,setLoading] =
+    useState(false);
 
-    const [
-        toast,
-        setToast
-    ] = useState("");
+    const [toast,setToast] =
+    useState("");
+
+
 
     useEffect(()=>{
 
         loadWarehouses();
 
     },[]);
+
+
 
     async function loadWarehouses(){
 
@@ -63,13 +52,9 @@ export default function ManageProducts(){
             const data =
             await response.json();
 
-            setWarehouses(
-                data
-            );
+            setWarehouses(data);
 
-            if(
-                data.length>0
-            ){
+            if(data.length>0){
 
                 setWarehouseId(
                     data[0].id
@@ -80,26 +65,27 @@ export default function ManageProducts(){
         }
         catch(error){
 
-            console.log(
-                error
-            );
+            console.log(error);
 
         }
 
     }
 
+
+
     async function addProduct(){
 
-        setLoading(
-            true
-        );
+        setLoading(true);
 
         try{
 
             const response =
             await fetch(
+
                 "/api/products/manage",
+
                 {
+
                     method:"POST",
 
                     headers:{
@@ -107,8 +93,7 @@ export default function ManageProducts(){
                         "application/json"
                     },
 
-                    body:
-                    JSON.stringify({
+                    body:JSON.stringify({
 
                         name,
                         description,
@@ -116,23 +101,19 @@ export default function ManageProducts(){
                         totalUnits
 
                     })
+
                 }
+
             );
 
-            if(
-                response.ok
-            ){
+            if(response.ok){
 
                 setToast(
                     "Product added successfully"
                 );
 
-                // Reset fields
-
                 setName("");
-
                 setDescription("");
-
                 setTotalUnits("");
 
                 if(
@@ -156,35 +137,38 @@ export default function ManageProducts(){
         }
         catch(error){
 
-            console.log(
-                error
-            );
+            console.log(error);
 
         }
 
-        setLoading(
-            false
-        );
+        setLoading(false);
 
     }
 
+
+
     return(
 
-        <>
-
-        
-
         <main
-        className=
-        "min-h-screen bg-gray-950 p-10">
+        className="
+        min-h-screen
+        bg-gray-950
+        p-10
+        ">
 
             <h1
-            className=
-            "text-5xl font-bold text-white mb-10">
+            className="
+            text-5xl
+            font-bold
+            text-white
+            mb-8
+            text-center
+            ">
 
                 Add Product
 
             </h1>
+
 
             {
 
@@ -197,8 +181,11 @@ export default function ManageProducts(){
             px-5
             py-3
             rounded-lg
-            mb-6
+            mb-8
             max-w-xl
+            mx-auto
+            text-center
+            shadow-lg
             ">
 
                 {toast}
@@ -207,22 +194,33 @@ export default function ManageProducts(){
 
             }
 
-            <div
-            className=
-            "bg-white rounded-xl p-8 max-w-xl">
 
-                <div className=
-                "mb-4">
+            <div
+            className="
+            bg-white
+            rounded-xl
+            p-8
+            max-w-xl
+            mx-auto
+            shadow-2xl
+            ">
+
+                <div className="mb-4">
 
                     <label
-                    className=
-                    "block font-bold text-black mb-2">
+                    className="
+                    block
+                    font-bold
+                    text-black
+                    mb-2
+                    ">
 
                         Product Name
 
                     </label>
 
                     <input
+
                     value={name}
 
                     onChange={(e)=>
@@ -230,18 +228,28 @@ export default function ManageProducts(){
                         e.target.value
                     )}
 
-                    className=
-                    "w-full border p-3 rounded text-black"
+                    className="
+                    w-full
+                    border
+                    p-3
+                    rounded
+                    text-black
+                    "
+
                     />
 
                 </div>
 
-                <div className=
-                "mb-4">
+
+                <div className="mb-4">
 
                     <label
-                    className=
-                    "block font-bold text-black mb-2">
+                    className="
+                    block
+                    font-bold
+                    text-black
+                    mb-2
+                    ">
 
                         Description
 
@@ -249,27 +257,35 @@ export default function ManageProducts(){
 
                     <textarea
 
-                    value={
-                        description
-                    }
+                    value={description}
 
                     onChange={(e)=>
                     setDescription(
                         e.target.value
                     )}
 
-                    className=
-                    "w-full border p-3 rounded text-black"
+                    className="
+                    w-full
+                    border
+                    p-3
+                    rounded
+                    text-black
+                    "
+
                     />
 
                 </div>
 
-                <div className=
-                "mb-4">
+
+                <div className="mb-4">
 
                     <label
-                    className=
-                    "block font-bold text-black mb-2">
+                    className="
+                    block
+                    font-bold
+                    text-black
+                    mb-2
+                    ">
 
                         Warehouse
 
@@ -277,51 +293,62 @@ export default function ManageProducts(){
 
                     <select
 
-                    value={
-                        warehouseId
-                    }
+                    value={warehouseId}
 
                     onChange={(e)=>
                     setWarehouseId(
                         e.target.value
                     )}
 
-                    className=
-                    "w-full border p-3 rounded text-black"
+                    className="
+                    w-full
+                    border
+                    p-3
+                    rounded
+                    text-black
+                    "
+
                     >
 
                     {
+
                     warehouses.map(
                     (warehouse)=>(
 
                     <option
+
                     key={
-                    warehouse.id
+                        warehouse.id
                     }
 
                     value={
-                    warehouse.id
-                    }>
-
-                    {
-                    warehouse.name
+                        warehouse.id
                     }
+
+                    >
+
+                        {warehouse.name}
 
                     </option>
 
                     ))
+
                     }
 
                     </select>
 
                 </div>
 
-                <div className=
-                "mb-6">
+
+                <div className="mb-6">
 
                     <label
-                    className=
-                    "block font-bold text-black mb-2">
+                    className="
+                    block
+                    font-bold
+                    text-black
+                    mb-2
+                    ">
 
                         Initial Stock
 
@@ -331,54 +358,67 @@ export default function ManageProducts(){
 
                     type="number"
 
-                    value={
-                    totalUnits
-                    }
+                    value={totalUnits}
 
                     onChange={(e)=>
                     setTotalUnits(
-                    e.target.value
+                        e.target.value
                     )}
 
-                    className=
-                    "w-full border p-3 rounded text-black"
+                    className="
+                    w-full
+                    border
+                    p-3
+                    rounded
+                    text-black
+                    "
+
                     />
 
                 </div>
 
-                <button
 
-                onClick={
-                addProduct
-                }
+                <div className="flex justify-center">
 
-                disabled={
-                loading
-                }
+                    <button
 
-                className=
-                "bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700"
-
-                >
-
-                    {
-                    loading
-                    ?
-
-                    "Adding..."
-
-                    :
-
-                    "Add Product"
+                    onClick={
+                        addProduct
                     }
 
-                </button>
+                    disabled={
+                        loading
+                    }
+
+                    className="
+                    bg-blue-600
+                    text-white
+                    px-8
+                    py-3
+                    rounded-lg
+                    hover:bg-blue-700
+                    transition
+                    "
+
+                    >
+
+                        {
+
+                        loading
+                        ?
+                        "Adding..."
+                        :
+                        "Add Product"
+
+                        }
+
+                    </button>
+
+                </div>
 
             </div>
 
         </main>
-
-        </>
 
     );
 
