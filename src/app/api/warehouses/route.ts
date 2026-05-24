@@ -3,8 +3,41 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
 
-    const warehouses =
-        await prisma.warehouse.findMany();
+    try {
 
-    return NextResponse.json(warehouses);
+        const warehouses =
+            await prisma.warehouse.findMany({
+
+                orderBy:{
+                    name:"asc"
+                }
+
+            });
+
+        return NextResponse.json(
+            warehouses
+        );
+
+    }
+    catch(error){
+
+        console.log(
+            error
+        );
+
+        return NextResponse.json(
+
+            {
+                error:
+                "Failed to load warehouses"
+            },
+
+            {
+                status:500
+            }
+
+        );
+
+    }
+
 }

@@ -1,8 +1,36 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function Navbar() {
+
+    const pathname =
+        usePathname();
+
+    const links = [
+
+        {
+            name: "Dashboard",
+            href: "/dashboard"
+        },
+
+        {
+            name: "Reserve",
+            href: "/reserve"
+        },
+
+        {
+            name: "Reservations",
+            href: "/reservations"
+        },
+
+        {
+            name: "Manage Products",
+            href: "/products/manage"
+        }
+
+    ];
 
     return (
 
@@ -14,13 +42,17 @@ export default function Navbar() {
             py-4
             flex
             justify-between
+            items-center
+            border-b
+            border-gray-800
             "
         >
 
             <h1
                 className="
-                text-xl
+                text-2xl
                 font-bold
+                text-blue-500
                 "
             >
                 Inventory System
@@ -29,27 +61,39 @@ export default function Navbar() {
             <div
                 className="
                 flex
-                gap-6
+                gap-4
                 "
             >
 
-                <Link
-                    href="/dashboard"
-                >
-                    Dashboard
-                </Link>
+                {
+                    links.map((link) => (
 
-                <Link
-                    href="/reserve"
-                >
-                    Reserve
-                </Link>
+                        <Link
+                            key={link.href}
+                            href={link.href}
 
-                <Link
-                    href="/reservations"
-                >
-                    Reservations
-                </Link>
+                            className={`
+                            px-4
+                            py-2
+                            rounded-lg
+                            transition
+
+                            ${
+                                pathname === link.href
+                                ?
+                                "bg-blue-600 text-white"
+                                :
+                                "text-gray-300 hover:bg-gray-800 hover:text-white"
+                            }
+                            `}
+                        >
+
+                            {link.name}
+
+                        </Link>
+
+                    ))
+                }
 
             </div>
 
