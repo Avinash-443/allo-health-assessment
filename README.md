@@ -477,7 +477,7 @@ Upstash Redis
 
 Live URL:
 
-allo-health-inventory-management.vercel.app
+https://allo-health-inventory-management.vercel.app
 
 GitHub Repository:
 
