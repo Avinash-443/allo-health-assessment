@@ -28,6 +28,11 @@ export default function Navbar() {
         {
             name: "Manage Products",
             href: "/products/manage"
+        },
+
+        {
+            name: "Warehouses",
+            href: "/warehouses"
         }
 
     ];
@@ -62,6 +67,7 @@ export default function Navbar() {
                 className="
                 flex
                 gap-4
+                flex-wrap
                 "
             >
 
