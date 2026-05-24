@@ -6,6 +6,7 @@ interface Reservation {
   id: string;
   quantity: number;
   status: string;
+  expiresAt: string;
 
   product: {
     name: string;
@@ -24,150 +25,267 @@ export default function ReservationsPage() {
   const [loading, setLoading] =
     useState(true);
 
+  const [currentTime, setCurrentTime] =
+    useState(Date.now());
+
   const [processingId, setProcessingId] =
     useState<string | null>(null);
 
   useEffect(() => {
+
     loadReservations();
-  }, []);
 
-  async function loadReservations() {
+    // Auto cleanup + refresh
+    const refreshInterval =
+      setInterval(async () => {
 
-    try {
+        try {
+
+          await fetch(
+            "/api/cleanup",
+            {
+              method: "POST"
+            }
+          );
+
+          await loadReservations();
+
+        } catch(error){
+
+          console.log(error);
+
+        }
+
+      },5000);
+
+    // Timer update every second
+    const timerInterval =
+      setInterval(() => {
+
+        setCurrentTime(
+          Date.now()
+        );
+
+      },1000);
+
+    return () => {
+
+      clearInterval(
+        refreshInterval
+      );
+
+      clearInterval(
+        timerInterval
+      );
+
+    };
+
+  },[]);
+
+  async function loadReservations(){
+
+    try{
 
       const response =
-        await fetch("/api/reservations");
+        await fetch(
+          "/api/reservations"
+        );
 
       const data =
         await response.json();
 
       setReservations(data);
 
-    } catch (error) {
+    }
+    catch(error){
 
       console.log(error);
 
     }
 
     setLoading(false);
+
   }
 
   async function confirmReservation(
-    reservationId: string
-  ) {
+    reservationId:string
+  ){
 
-    setProcessingId(reservationId);
+    setProcessingId(
+      reservationId
+    );
 
-    try {
+    try{
 
       await fetch(
         "/api/reservations/confirm",
         {
-          method: "POST",
+          method:"POST",
 
-          headers: {
+          headers:{
             "Content-Type":
-              "application/json"
+            "application/json"
           },
 
-          body: JSON.stringify({
+          body:JSON.stringify({
             reservationId
           })
         }
       );
 
-      loadReservations();
+      await loadReservations();
 
-    } catch(error) {
+    }
+    catch(error){
 
       console.log(error);
 
     }
 
-    setProcessingId(null);
+    setProcessingId(
+      null
+    );
+
   }
 
   async function cancelReservation(
-    reservationId: string
-  ) {
+    reservationId:string
+  ){
 
-    setProcessingId(reservationId);
+    setProcessingId(
+      reservationId
+    );
 
-    try {
+    try{
 
       await fetch(
         "/api/reservations/cancel",
         {
-          method: "POST",
+          method:"POST",
 
-          headers: {
+          headers:{
             "Content-Type":
-              "application/json"
+            "application/json"
           },
 
-          body: JSON.stringify({
+          body:JSON.stringify({
             reservationId
           })
         }
       );
 
-      loadReservations();
+      await loadReservations();
 
-    } catch(error) {
+    }
+    catch(error){
 
       console.log(error);
 
     }
 
-    setProcessingId(null);
+    setProcessingId(
+      null
+    );
+
   }
 
-  if (loading) {
+  function getRemainingTime(
+    expiresAt:string
+  ){
 
-    return (
+    const remaining =
+      new Date(
+        expiresAt
+      ).getTime()
+      -
+      currentTime;
 
-      <div className="p-10 text-white">
+    if(
+      remaining <=0
+    ){
 
-        Loading reservations...
+      return "Expired";
+
+    }
+
+    const minutes =
+      Math.floor(
+        remaining/60000
+      );
+
+    const seconds =
+      Math.floor(
+        (
+          remaining%
+          60000
+        )/1000
+      );
+
+    return `${minutes}m ${seconds}s`;
+
+  }
+
+  if(
+    loading
+  ){
+
+    return(
+
+      <div className=
+      "p-10 text-white">
+
+        Loading...
 
       </div>
 
     );
+
   }
 
-  return (
+  return(
 
-    <main className="min-h-screen bg-gray-950 p-10">
+    <main className=
+    "min-h-screen bg-gray-950 p-10">
 
-      <h1 className="text-5xl text-white font-bold mb-8">
+      <h1 className=
+      "text-5xl text-white font-bold mb-8">
+
         Reservations
+
       </h1>
 
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+      <div className=
+      "bg-white rounded-xl overflow-hidden">
 
-        <table className="w-full">
+        <table className=
+        "w-full">
 
-          <thead className="bg-blue-600 text-white">
+          <thead className=
+          "bg-blue-600 text-white">
 
             <tr>
 
-              <th className="p-4 text-left">
+              <th className="p-4">
                 Product
               </th>
 
-              <th className="p-4 text-left">
+              <th className="p-4">
                 Warehouse
               </th>
 
-              <th className="p-4 text-left">
+              <th className="p-4">
                 Quantity
               </th>
 
-              <th className="p-4 text-left">
+              <th className="p-4">
                 Status
               </th>
 
-              <th className="p-4 text-left">
+              <th className="p-4">
+                Expires In
+              </th>
+
+              <th className="p-4">
                 Actions
               </th>
 
@@ -175,112 +293,133 @@ export default function ReservationsPage() {
 
           </thead>
 
-          <tbody className="text-gray-800">
+          <tbody className=
+          "text-gray-800">
 
-            {reservations.map((reservation) => (
+            {reservations.map(
+            (reservation)=>(
 
-              <tr
-                key={reservation.id}
-                className="border-b hover:bg-gray-100 transition"
-              >
+            <tr
+            key={
+            reservation.id
+            }
 
-                <td className="p-4 font-semibold">
-                  {reservation.product.name}
-                </td>
+            className=
+            "border-b hover:bg-gray-100"
+            >
 
-                <td className="p-4">
-                  {reservation.warehouse.name}
-                </td>
+              <td className="p-4">
+                {reservation.product.name}
+              </td>
 
-                <td className="p-4">
-                  {reservation.quantity}
-                </td>
+              <td className="p-4">
+                {reservation.warehouse.name}
+              </td>
 
-                <td className="p-4">
+              <td className="p-4">
+                {reservation.quantity}
+              </td>
 
-                  <span
-                    className={`px-3 py-1 rounded-full text-white font-medium
-                    ${
-                      reservation.status === "PENDING"
-                        ? "bg-yellow-500"
-                        : reservation.status === "CONFIRMED"
-                        ? "bg-green-600"
-                        : "bg-red-600"
-                    }`}
-                  >
+              <td className="p-4">
 
-                    {reservation.status}
+                <span
+                className={`px-3 py-1 rounded text-white
 
-                  </span>
+                ${
+                  reservation.status==="PENDING"
+                  ? "bg-yellow-500"
+                  : reservation.status==="CONFIRMED"
+                  ? "bg-green-600"
+                  : "bg-red-600"
+                }`}
+                >
 
-                </td>
+                  {reservation.status}
 
-                <td className="p-4">
+                </span>
 
-                  {reservation.status ===
-                    "PENDING" && (
+              </td>
 
-                    <div className="flex gap-2">
+              <td className=
+              "p-4 font-semibold text-red-600">
 
-                      <button
-                        disabled={
-                          processingId ===
-                          reservation.id
-                        }
+              {
+              reservation.status==="PENDING"
 
-                        onClick={() =>
-                          confirmReservation(
-                            reservation.id
-                          )
-                        }
+              ?
 
-                        className="
-                        bg-green-600
-                        text-white
-                        px-4
-                        py-2
-                        rounded
-                        hover:bg-green-700
-                        disabled:bg-gray-400"
-                      >
+              getRemainingTime(
+                reservation.expiresAt
+              )
 
-                        Confirm
+              :
 
-                      </button>
+              "-"
+              }
 
-                      <button
-                        disabled={
-                          processingId ===
-                          reservation.id
-                        }
+              </td>
 
-                        onClick={() =>
-                          cancelReservation(
-                            reservation.id
-                          )
-                        }
+              <td className="p-4">
 
-                        className="
-                        bg-red-600
-                        text-white
-                        px-4
-                        py-2
-                        rounded
-                        hover:bg-red-700
-                        disabled:bg-gray-400"
-                      >
+              {
 
-                        Cancel
+              reservation.status==="PENDING"
 
-                      </button>
+              &&
 
-                    </div>
+              getRemainingTime(
+                reservation.expiresAt
+              )!=="Expired"
 
-                  )}
+              &&
 
-                </td>
+              <div className=
+              "flex gap-2">
 
-              </tr>
+                <button
+                disabled={
+                  processingId===
+                  reservation.id
+                }
+
+                onClick={()=>confirmReservation(
+                  reservation.id
+                )}
+
+                className=
+                "bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700"
+                >
+
+                  Confirm
+
+                </button>
+
+                <button
+
+                disabled={
+                  processingId===
+                  reservation.id
+                }
+
+                onClick={()=>cancelReservation(
+                  reservation.id
+                )}
+
+                className=
+                "bg-red-600 text-white px-3 py-2 rounded hover:bg-red-700"
+                >
+
+                  Cancel
+
+                </button>
+
+              </div>
+
+              }
+
+              </td>
+
+            </tr>
 
             ))}
 
@@ -291,5 +430,7 @@ export default function ReservationsPage() {
       </div>
 
     </main>
+
   );
+
 }
