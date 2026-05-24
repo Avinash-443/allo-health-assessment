@@ -1,5 +1,7 @@
 # Allo Inventory Reservation System
 
+Live URL: https://allo-health-inventory-management.vercel.app
+
 ## Overview
 
 This project is an implementation of the Allo Engineering take-home exercise for building a temporary inventory reservation system for multi-warehouse inventory management.
@@ -189,91 +191,203 @@ New warehouses automatically become available throughout the application whereve
 
 ## Reservation Expiry Mechanism
 
-Reservations are created with:
+Each reservation is created with an expiry timestamp to temporarily hold inventory during checkout.
 
+Example:
+
+```ts
 expiresAt = currentTime + 10 minutes
+```
 
-Automatic cleanup process:
+When a customer initiates a reservation, the requested quantity is not permanently deducted from inventory. Instead, the quantity is moved into the `reservedUnits` state and remains unavailable to other users for a fixed period.
 
-1. Find expired reservations
+The reservation lifecycle is:
 
-2. Update status:
+Pending → Confirmed / Released
 
+### Reservation Flow
+
+1. Customer creates a reservation
+2. Inventory quantity is moved to `reservedUnits`
+3. Reservation enters `PENDING` state
+4. Reservation remains valid for 10 minutes
+5. User may either:
+   - Confirm purchase
+   - Cancel reservation
+6. If no action is taken before expiry:
+   - Reservation becomes `RELEASED`
+   - Reserved inventory is restored
+
+### Automatic Cleanup Process
+
+Expired reservations are identified using:
+
+```ts
+expiresAt <= currentTime
+```
+
+For every expired reservation:
+
+1. Find reservations with:
+
+```ts
+status = PENDING
+```
+
+2. Change status:
+
+```txt
 PENDING → RELEASED
+```
 
-3. Restore reserved inventory
+3. Restore reserved inventory:
 
-4. Refresh frontend automatically
+```ts
+reservedUnits -= reservation.quantity
+```
 
-Current implementation:
+4. Refresh cached product data so the updated inventory becomes visible in the UI.
 
-- API-triggered cleanup process
+### Current Implementation
 
-Production alternatives:
+For this implementation, an API-triggered cleanup mechanism is used.
 
-- Vercel Cron Job
-- Background Worker
-- Queue Processing System
+Cleanup is executed when users actively interact with reservation-related pages and APIs. This approach was selected because it keeps the system simple while remaining suitable for a demo application.
+
+### Production Alternatives
+
+For a production-scale system, a more reliable background processing mechanism would be preferred:
+
+- Scheduled Cron Jobs
+- Background Workers
+- Queue-based Processing Systems
+- Event-driven cleanup services
+
+These approaches ensure cleanup execution even when there are no active users on the platform.
 
 ---
 
 ## Concurrency Handling
 
-Correctness under concurrency was treated as the highest-priority requirement.
+Concurrency correctness was treated as the highest-priority requirement because inventory systems are highly susceptible to race conditions.
 
-Implementation uses:
+The primary problem is preventing multiple users from successfully reserving the same inventory simultaneously.
+
+### Example Problem Scenario
+
+Assume inventory contains:
+
+```txt
+Total Units = 5
+Reserved Units = 0
+Available Units = 5
+```
+
+Three users attempt reservations simultaneously:
+
+```txt
+User A → Reserve 4 units
+User B → Reserve 4 units
+User C → Reserve 4 units
+```
+
+Without concurrency protection:
+
+```txt
+User A → Success
+User B → Success
+User C → Success
+```
+
+Result:
+
+```txt
+Reserved Units = 12
+Available Units = -7
+```
+
+This creates inventory overselling and inconsistent system state.
+
+### Implemented Solution
+
+The application uses:
 
 - Prisma database transactions
 - Atomic inventory updates
 - Conditional update logic
+- Database-level consistency checks
 
-Flow:
+Reservation execution follows this sequence:
 
-Start transaction
+```txt
+Start Transaction
+        ↓
+Read Inventory
+        ↓
+Check Available Quantity
+        ↓
+Perform Atomic Update
+        ↓
+Create Reservation
+        ↓
+Commit Transaction
+```
 
-↓
+Inventory updates are executed only if inventory remains valid at the exact moment of modification.
 
-Validate inventory
+Example condition:
 
-↓
+```ts
+Update inventory only if:
 
-Atomic inventory update
+reservedUnits <= totalUnits - requestedQuantity
+```
 
-↓
+If another request modifies inventory before the current request completes:
 
-Create reservation
+```txt
+Rows updated = 0
+```
 
-↓
+The request immediately fails and returns:
 
-Commit transaction
+```txt
+HTTP 409 → Not enough stock
+```
 
-This prevents race conditions and overselling.
+### Result
 
-Example:
+For simultaneous requests:
 
+```txt
 Inventory:
 
 Total Units = 5
-
 Reserved Units = 0
 
-Three users simultaneously reserve:
+Requests:
 
-Quantity = 4
+User A → Reserve 4
+User B → Reserve 4
+User C → Reserve 4
+```
 
-Result:
+Actual outcome:
 
+```txt
 User A → Success
+User B → 409 Conflict
+User C → 409 Conflict
+```
 
-User B → 409
+Only one request successfully acquires inventory.
 
-User C → 409
+This guarantees:
 
-Only one request succeeds.
-
-This guarantees race-condition-safe reservation behavior.
-
----
+- No race conditions
+- No duplicate reservations
+- No inventory overselling
+- Consistent inventory state across concurrent requests
 
 ## Redis Usage
 
@@ -314,6 +428,8 @@ Create .env:
 
 ```env
 DATABASE_URL=your_database_url
+
+DIRECT_URL=your_direct_url
 
 REDIS_URL=your_redis_url
 
